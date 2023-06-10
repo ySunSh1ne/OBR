@@ -1,9 +1,17 @@
 #include <Arduino.h>
+#include <NewPing.h>
+#include <AFMotor.h>
 
+AF_DCMotor motor1(motorEsquerdo);
+AF_DCMotor motor2(motorDireito);
+// Objeto para controlar a ponte H
 
-#define black  0 // Valor para a cor Preto
-#define green 1 // Valor para a cor Verde
-#define white  2 // Valor para a cor Branco
+NewPing sonar1(trigger_pin1, echo_pin1, max_distance);  // Objeto do sensor ultrassônico 1
+NewPing sonar2(trigger_pin2, echo_pin2, max_distance);  // Objeto do sensor ultrassônico 2
+
+#define motorEsquerdo 1
+#define motorDireito 2
+// Pinos de controle da ponte H
 
 #define buttonPin1 2 // Pino do primeiro botão
 #define buttonPin2 3 // Pino do segundo botão
@@ -11,46 +19,64 @@
 #define powerButtonPin 5 // Pino do botão de ligar o robô
 // Definindo as portas dos Botoes
 
-#define sensorPin1 A0 // Pino do primeiro sensor LRD
-#define sensorPin2 A1 // Pino do segundo sensor LRD
-#define sensorPin3 A2 // Pino do terceiro sensor LRD
-#define sensorPin4 A3 // Pino do quarto sensor LRD
-#define sensorPin5 A4 // Pino do quinto sensor LRD
-#define sensorPin6 A5 // Pino do sexto sensor LRD
-#define sensorPin7 A6 // Pino do setimo sensor LRD
-// Defininindo as portas dos sensores LRD
+#define ledPin2 3
+#define ledPin3 4
+#define ledPin4 5
+// Pinos dos LEDs padrão
+
+// Definindo os pinos dos sensores LDR
+#define ldrPin1 A0
+#define ldrPin2 A1
+#define ldrPin3 A0
+#define ldrPin4 A1
+#define ldrPin5 A0
 
 
-#define ledPin1 6 // Pino do primeiro LED
-#define ledPin2 7 // Pino do segundo LED
-#define ledPin3 8 // Pino do terceiro LED
-#define ledPin4 9 // Pino do quarto LED
-#define ledPin5 10 // Pino do quinto LED
-// Definindo as portas dos LEDS
+// Definindo os pinos dos LEDs RGB
+#define ledPin1Red 9
+#define ledPin1Green 10
+#define ledPin1Blue 11
+#define ledPin2Red 5
+#define ledPin2Green 6
+#define ledPin2Blue 7
 
-#define motorEsqFrente 11 // 
-#define motorEsqTras 12 // Pino 2 do Motor 1
-#define motorEsqSpd 13 // Pino 3 do Motor 1 Pino de velocidade
+#define trigger_pin1 2  // Pino de trigger do sensor ultrassônico 1
+#define echo_pin1 3     // Pino de eco do sensor ultrassônico 1
+#define trigger_pin2 4  // Pino de trigger do sensor ultrassônico 2
+#define echo_pin2 5     // Pino de eco do sensor ultrassônico 2
+#define max_distance 200 // Distância máxima suportada pelos sensores (em centímetros)
 
-#define motorDirFrente 14 // Pino 1 do Motor 2
-#define motorDirTras 15 // Pino 2 do Motor 2
-#define motorDirSpd 16 // Pino 3 do Motor 2 Pino de velocidade
-// Definindo as portas dos motores
-
-#define trigger_pin1 17 // Pino do Arduino conectado ao pino de disparo do sensor ultrassônico.
-#define echo_pin1 18 // Pino do Arduino conectado ao pino de eco do sensor ultrassônico.
-#define max_distance1 200 // Distância máxima para realizar o eco (em centímetros). A distância máxima do sensor é de 400-500cm.
-
-#define trigger_pin2 19 // Pino do Arduino conectado ao pino de disparo do segundo sensor ultrassônico.
-#define echo_pin2 20 // Pino do Arduino conectado ao pino de eco do segundo sensor ultrassônico.
-#define max_distance2 200 // Distância máxima para realizar o eco (em centímetros). A distância máxima do sensor é de 400-500cm.
+#define sample_size 5  // Tamanho da janela do filtro de média móvel
 // Definindo as portas dos sensores de presença
 
 
 //**************************** Variaveis Uteis **************************************
 
-int forca_Curva = 120; // forca da curva no obstaculo
+int forca_Curva = 120; 
 int forca = 110;
 int forca_Baixa = 70;
 int forca_Baixa_Curva = 100;
+// Parâmetros de velocidade
 
+int readings1[sample_size];  // Array de leituras para o sensor 1
+int readings2[sample_size];  // Array de leituras para o sensor 2
+int index = 0;               // Índice atual do array de leituras
+int total1 = 0;              // Soma total das leituras do sensor 1
+int total2 = 0;              // Soma total das leituras do sensor 2
+
+int distance1 = sonar1.ping_cm();
+int distance2 = sonar2.ping_cm();
+// Realiza a leitura dos sensores
+
+
+int average1 = total1 / sample_size;
+int average2 = total2 / sample_size;
+// Calcula a média das leituras suavizadas
+
+int ldrValue1 = 0;
+int ldrValue2 = 0;
+// Definindo variáveis para armazenar os valores dos sensores LDR
+
+int groundColor1 = 0;
+int groundColor2 = 0;
+// Definindo variável para armazenar a cor do chão

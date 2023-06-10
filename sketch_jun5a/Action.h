@@ -1,199 +1,190 @@
 #include <Arduino.h>
-
+#include <AFMotor.h>
+#include <Config.h>
 //Funçoes de Ação
 
-void pararMotor() {
-  //Motores da Esquerda
-  analogWrite(motorEsqFrente, 255);
-  analogWrite(motorEsqTras, 255);
-
-  //Motores da Direita
-  analogWrite(motorDirFrente, 255);
-  analogWrite(motorDirFrente, 255);
-
-};
-
-void mover(int a, int b) {
-
-  if (a > 0) { // se for maior que zero o movimento é para frente 
-    analogWrite(motorEsqFrente, a);
-    analogWrite(motorEsqTras, 0);
-
-  }
-
-  else if (a == 0) { // se for igual a zero o movimento é parado
-    analogWrite(motorEsqFrente, 0);
-    analogWrite(motorEsqTras, 0);
-  }
-
-  else { // se for menos que zero o movimento é pra tras
-    analogWrite(motorEsqFrente, 0);
-    analogWrite(motorEsqTras, abs(a)); //a função analogWrite não aceita um valor negativo, portanto usar abs(a) garante que mesmo queo valor de 'a' seja negativo, a função analogWrite recebera um valor positivo 
-  }
-  
-  if (b > 0) {
-    analogWrite(motorDirFrente, b);
-    analogWrite(motorDirFrente, 0);
-  }
-  else if (b == 0) {
-    analogWrite(motorDirFrente, 0);
-    anaogWrite(motorDirTras, 0);
-  }
-  else {
-    analogWrite(motorDirFrente, 0);
-    analogWrite(motorDirTras, abs(b));
-  }
-};
-
-
-void Curva90Graus(int lado, int tipo) {
-
-  // faz a curva dependendo do lado passado no parâmetro
-  if (lado == ESQUERDA) {
-
-    Serial.println("---------------------------- Curva ESQUERDA --------------------");
-    pararMotores();
-    delay(500);  // Aguarda um breve intervalo para parar completamente
-
-    // Realiza a curva para a esquerda
-    mover(forca_Curva * -1, forca_Curva);
-
-    // Aguarda até que os sensores LDR 3 e 5 não detectem mais a linha preta
-    while (digitalRead(sensorPin3) == black || digitalRead(sensorPin5) == black) {
-      // Continua a curva enquanto pelo menos um dos sensores detectar a linha preta
-    }
-
-    pararMotores();
-    delay(500);  // Aguarda um breve intervalo para parar completamente
-
-    Serial.println("------------- FIM CURVA ESQUERDA ----------------");
-
-  }
-  else if (lado == DIREITA) {
-
-    Serial.println("---------------------------- Curva DIREITA --------------------");
-    pararMotores();
-    delay(500);  // Aguarda um breve intervalo para parar completamente
-
-    // Realiza a curva para a direita
-    mover(forca_Curva, forca_Curva * -1);
-
-    // Aguarda até que os sensores LDR 3 e 5 não detectem mais a linha preta
-    while (digitalRead(sensorPin3) == black || digitalRead(sensorPin5) == black) {
-      // Continua a curva enquanto pelo menos um dos sensores detectar a linha preta
-    }
-
-    pararMotores();
-    delay(500);  // Aguarda um breve intervalo para parar completamente
-
-    Serial.println("------------- FIM CURVA DIREITA ----------------");
-  }
-  pararMotores();
+// Função para mover os motores para frente
+void moverParaFrente(int velocidade) {
+  motor1.setSpeed(velocidade);
+  motor2.setSpeed(velocidade);
+  motor1.run(FORWARD);
+  motor2.run(FORWARD);
+  Serial.println("Movendo para frente");
 }
 
-void T(int lado) {
-  // Anda um pouco para frente para verificar se é um T ou 90 graus
-  Mover(3, forca_Baixa, FRENTE);
-  
-  // Robô para
-  pararMotores();
-  delay(1000);
-  
-  // Verifica se está tudo branco; se sim, ele volta e faz a curva
-  if (() == 0 || () == 7000) {
-    Mover(3, forca_Baixa * -1, FRENTE);
-    pararMotores();
-    delay(500);
-    
-    if (lado == ESQUERDA) {
-      Mover(2, forca, FRENTE);
-      Curva90Graus(ESQUERDA, LIN);
-      Mover(7, forca * -1, FRENTE);
-    }
-    
-    if (lado == DIREITA) {
-      Mover(2, forca, FRENTE);
-      Curva90Graus(DIREITA, LIN);
-      Mover(7, forca * -1, FRENTE);
-    }
-  }
+// Função para mover os motores para trás
+void moverParaTras(int velocidade) {
+  motor1.setSpeed(velocidade);
+  motor2.setSpeed(velocidade);
+  motor1.run(BACKWARD);
+  motor2.run(BACKWARD);
+  Serial.println("Movendo para trás");
 }
 
-void Gap(int estado) {
-  LED1.turnOff();
-  
-  if (estado == ST_PRINCIPAL) {
-    mover(forca_Baixa, forca_Baixa);
-  } else if (estado == ST_RAMPA) {
-    mover(forcaRampa, forcaRampa);
-  }
-  
-  LED1.turnOn();
+// Função para fazer um pequeno movimento para a direita
+void moverDireita(int velocidade) {
+  motor1.setSpeed(velocidade);
+  motor2.setSpeed(0);
+  motor1.run(FORWARD);
+  motor2.run(RELEASE);
+  Serial.println("Movimento para a direita");
 }
 
-boolean Verde(int lado) {
-  boolean sucesso = false;
-
-  if (lado == ESQUERDA) {
-    andarCM(3, forca);
-    delay(300);
-
-    pararMotores();
-    delay(300);
-
-    Curva90Graus(ESQUERDA, LIN);
-    delay(300);
-
-    andarCM(7, forca * -1);
-
-    Buzzer.turnOff();
-    LED3.turnOff();
-
-    sucesso = true;
-  }
-
-  if (lado == DIREITA) {
-    andarCM(3, forca);
-    delay(300);
-    pararMotores();
-    delay(300);
-
-    Curva90Graus(DIREITA, LIN);
-    delay(300);
-
-    andarCM(7, forca * -1);
-
-    Buzzer.turnOff();
-    LED4.turnOff();
-
-    sucesso = true;
-  }
-
-  return sucesso;
+// Função para fazer um pequeno movimento para a esquerda
+void moverEsquerda(int velocidade) {
+  motor1.setSpeed(0);
+  motor2.setSpeed(velocidade);
+  motor1.run(RELEASE);
+  motor2.run(FORWARD);
+  Serial.println("Movimento para a esquerda");
 }
 
-void Desvio(int lado) {
-  mover(forca_Baixa * -1, forca_Baixa * -1);
-  delay(400);
+// Função para parar os motores
+void pararMotores() {
+  motor1.run(RELEASE);
+  motor2.run(RELEASE);
+  Serial.println("Motores parados");
+}
 
-  int forca_inicial = 30;
+void curva90Esquerda(int velocidade) {
+  motor1.write(0);  // Define a velocidade do motor1 como 0 (desligado)
+  motor2.write(velocidade);  // Define a velocidade do motor2 como a velocidade fornecida
+  delay(500);  // Aguarda meio segundo para iniciar a curva
+  pararMotores();  // Para os motores após a curva
+  delay(500);  // Aguarda meio segundo antes de continuar o movimento
+  moverParaFrente(velocidade);  // Move para frente após a curva
+}
 
-  mover(-40, 80);
-  delay(800);
+void curva90Direita(int velocidade) {
+  motor1.write(velocidade);  // Define a velocidade do motor1 como a velocidade fornecida
+  motor2.write(0);  // Define a velocidade do motor2 como 0 (desligado)
+  delay(500);  // Aguarda meio segundo para iniciar a curva
+  pararMotores();  // Para os motores após a curva
+  delay(500);  // Aguarda meio segundo antes de continuar o movimento
+  moverParaFrente(velocidade);  // Move para frente após a curva
+}
 
-  mover(50, 80);
-  delay(1700);
+void curvaDireita45(int velocidade) {
+  motor1.setSpeed(velocidade);
+  motor2.setSpeed(0);
+  motor1.run(FORWARD);
+  motor2.run(RELEASE);
+  delay(250);  // Aguarda um quarto de segundo para iniciar a curva
+  pararMotores();  // Para os motores após a curva
+  delay(250);  // Aguarda um quarto de segundo antes de continuar o movimento
+  moverParaFrente(velocidade);  // Move para frente após a curva
+}
 
-  mover(110, -55);
-  delay(2100);
+void curvaDireita45(int velocidade) {
+  motor1.setSpeed(velocidade);
+  motor2.setSpeed(0);
+  motor1.run(FORWARD);
+  motor2.run(RELEASE);
+  delay(250);  // Aguarda um quarto de segundo para iniciar a curva
+  pararMotores();  // Para os motores após a curva
+  delay(250);  // Aguarda um quarto de segundo antes de continuar o movimento
+  moverParaFrente(velocidade);  // Move para frente após a curva
+}
 
-  while (verificaGap() == true) {
-    mover(forca_Baixa, forca_Baixa);
+void curva180(int velocidade) {
+  curvaDireita(velocidade);  // Faz a curva de 90 graus à direita
+  delay(500);  // Aguarda meio segundo antes de iniciar a segunda curva
+  curvaEsquerda(velocidade);  // Faz a curva de 90 graus à esquerda
+}
+
+void desviarObstaculo() {
+  moverParaTras(forca_Baixa);  // Move para trás com uma velocidade reduzida
+  delay(500);  // Aguarda meio segundo para recuar
+  pararMotores();  // Para os motores
+  delay(500);  // Aguarda meio segundo antes de iniciar o desvio
+  curvaEsquerda(forca_Curva);  // Faz uma curva à esquerda com velocidade alta
+  delay(1000);  // Aguarda um segundo para completar a curva
+}
+
+// Função para calcular a média dos valores lidos pelo sensor LDR
+float calculateAverage(int sensorPin) {
+  int sum = 0;
+  int readings = 10;  // número de leituras para a média
+  
+  for (int i = 0; i < readings; i++) {
+    sum += analogRead(sensorPin);
+    delay(10);
   }
   
-  while (1) {
-    pararMotores();
+  return (float)sum / readings;
+}
+
+// Função para desligar todos os LEDs
+void turnOffLEDs() {
+  digitalWrite(ledPin1Red, LOW);
+  digitalWrite(ledPin1Green, LOW);
+  digitalWrite(ledPin1Blue, LOW);
+  digitalWrite(ledPin2Red, LOW);
+  digitalWrite(ledPin2Green, LOW);
+  digitalWrite(ledPin2Blue, LOW);
+}
+
+// Função para atualizar a cor do LED RGB 1
+void updateLED1(int color) {
+  turnOffLEDs();
+  if (color == 0) {
+    digitalWrite(ledPin1Red, HIGH);
+  } else if (color == 1) {
+    digitalWrite(ledPin1Green, HIGH);
+  } else if (color == 2) {
+    digitalWrite(ledPin1Blue, HIGH);
   }
 }
 
+// Função para atualizar a cor do LED RGB 2
+void updateLED2(int color) {
+  turnOffLEDs();
+  if (color == 0) {
+    digitalWrite(ledPin2Red, HIGH);
+  } else if (color == 1) {
+    digitalWrite(ledPin2Green, HIGH);
+  } else if (color == 2) {
+    digitalWrite(ledPin2Blue, HIGH);
+  }
+}
 
+void verificarVerde1() {
+  // Lendo os valores dos sensores LDR
+  ldrValue1 = calculateAverage(ldrPin1);
+
+  // Exibindo os valores lidos no monitor serial
+  Serial.print("Sensor 1: ");
+  Serial.print(ldrValue1);
+  
+  // Verificando a cor do chão com base nos valores dos sensores LDR
+  if (ldrValue1 == 500) {
+    // Chão Branco
+    groundColor1 = 0;
+  } else if (ldrValue1 == 500) {
+    // Chão Verde
+    groundColor1 = 1;
+  } else {
+    // Chão Preto
+    groundColor1 = 2;
+  }
+
+void verificarVerde2() {
+  // Lendo os valores dos sensores LDR
+  ldrValue2 = calculateAverage(ldrPin2);
+
+  // Exibindo os valores lidos no monitor serial
+  Serial.print("\tSensor 2: ");
+  Serial.println(ldrValue2);
+  
+  // Verificando a cor do chão com base nos valores dos sensores LDR
+  if (ldrValue2 == 500) {
+    // Chão Branco
+    groundColor2 = 0;
+  } else if (ldrValue2 == 500) {
+    // Chão Verde
+    groundColor2 = 1;
+  } else {
+    // Chão Preto
+    groundColor2 = 2;
+  }
+}
